@@ -8,10 +8,11 @@
 //********************************************************
 
 //-------------------------------------------------------
-// RX DIY E22 1W STM32G441KB
+// RX DIY E22 v007 STM32G441KB
 //-------------------------------------------------------
 
 #define DEVICE_HAS_OUT
+
 
 //-- Timers, Timing, EEPROM, and such stuff
 
@@ -45,7 +46,7 @@
 //#define UART_USE_RX
 //#define UART_RXBUFSIZE            512
 
-#define UARTC_USE_LPUART1         // debug
+#define UARTC_USE_LPUART1 // debug
 #define UARTC_BAUD                115200
 #define UARTC_USE_TX
 #define UARTC_TXBUFSIZE           512
@@ -201,3 +202,5 @@ const rfpower_t rfpower_list[] = {
 	{ .dbm = POWER_27_DBM, .mW = 500 },
 	{ .dbm = POWER_30_DBM, .mW = 1000 },
 };
+
+
