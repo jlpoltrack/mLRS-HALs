@@ -63,6 +63,7 @@
   #define DEVICE_NAME "WioE5 Grove WLE5JC"
   #define DEVICE_IS_RECEIVER
   #define DEVICE_HAS_SX126x
+  #define SX_USE_DCDC
   #define FREQUENCY_BAND_868_MHZ
   #define FREQUENCY_BAND_915_MHZ_FCC
 #endif
@@ -82,6 +83,7 @@
   #define DEVICE_HAS_SX126x
   #define FREQUENCY_BAND_868_MHZ
   #define FREQUENCY_BAND_915_MHZ_FCC
+  #define SX_USE_DCDC
   //#define FREQUENCY_BAND_433_MHZ
   //#define FREQUENCY_BAND_70_CM_HAM
 #endif
