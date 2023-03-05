@@ -63,9 +63,9 @@
   #define DEVICE_NAME "WioE5 Grove WLE5JC"
   #define DEVICE_IS_RECEIVER
   #define DEVICE_HAS_SX126x
-  #define SX_USE_DCDC
   #define FREQUENCY_BAND_868_MHZ
   #define FREQUENCY_BAND_915_MHZ_FCC
+  #define SX_USE_DCDC
 #endif
 
 #ifdef RX_WIO_E5_MINI_WLE5JC
@@ -74,6 +74,7 @@
   #define DEVICE_HAS_SX126x
   #define FREQUENCY_BAND_868_MHZ
   #define FREQUENCY_BAND_915_MHZ_FCC
+  #define SX_USE_DCDC
 #endif
 
 
@@ -84,8 +85,7 @@
   #define FREQUENCY_BAND_868_MHZ
   #define FREQUENCY_BAND_915_MHZ_FCC
   #define SX_USE_DCDC
-  //#define FREQUENCY_BAND_433_MHZ
-  //#define FREQUENCY_BAND_70_CM_HAM
+
 #endif
 
 
@@ -104,6 +104,7 @@
   #define DEVICE_HAS_SX128x
   #define FREQUENCY_BAND_2P4_GHZ
   #define SX_USE_DCDC
+  #define SX2_USE_DCDC
 #endif
 
 #ifdef RX_DIY_E28_G441KB
@@ -120,6 +121,7 @@
   #define DEVICE_HAS_SX128x
   #define FREQUENCY_BAND_2P4_GHZ
   #define SX_USE_DCDC
+  #define SX2_USE_DCDC
 #endif
 
 #ifdef TX_DIY_E28_G431KB
@@ -165,7 +167,6 @@
   #define DEVICE_NAME "DIY E22 G431KB"
   #define DEVICE_IS_TRANSMITTER
   #define DEVICE_HAS_SX126x
-  //#define FREQUENCY_BAND_868_MHZ
   #define FREQUENCY_BAND_70_CM_HAM
   #define SX_USE_DCDC
 #endif
@@ -202,10 +203,10 @@
   #define DEVICE_NAME "DIY E77 E22"
   #define DEVICE_IS_RECEIVER
   #define DEVICE_HAS_SX126x
-  #define FREQUENCY_BAND_868_MHZ
-  #define FREQUENCY_BAND_915_MHZ_FCC
-  //#define FREQUENCY_BAND_433_MHZ
-  //#define FREQUENCY_BAND_70_CM_HAM
+  #define FREQUENCY_BAND_433_MHZ
+  #define FREQUENCY_BAND_70_CM_HAM
+  #define SX_USE_DCDC
+  #define SX2_USE_DCDC
 #endif
 
 
