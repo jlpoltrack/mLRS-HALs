@@ -128,7 +128,12 @@ void sx_dio_exti_isr_clearflag(void)
 
 
 //-- Out port
-// UART_UARTx = USART2
+#ifdef UART_USE_UART2
+  #define OUT_UARTx               USART2
+#elif defined UART_USE_LPUART1
+  #define OUT_UARTx               LPUART1
+#endif
+
 
 void out_init_gpio(void)
 {
@@ -136,16 +141,16 @@ void out_init_gpio(void)
 
 void out_set_normal(void)
 {
-    LL_USART_Disable(USART2);
-    LL_USART_SetTXPinLevel(USART2, LL_USART_TXPIN_LEVEL_STANDARD);
-    LL_USART_Enable(USART2);
+    LL_USART_Disable(OUT_UARTx);
+    LL_USART_SetTXPinLevel(OUT_UARTx, LL_USART_TXPIN_LEVEL_STANDARD);
+    LL_USART_Enable(OUT_UARTx);
 }
 
 void out_set_inverted(void)
 {
-    LL_USART_Disable(USART2);
-    LL_USART_SetTXPinLevel(USART2, LL_USART_TXPIN_LEVEL_INVERTED);
-    LL_USART_Enable(USART2);
+    LL_USART_Disable(OUT_UARTx);
+    LL_USART_SetTXPinLevel(OUT_UARTx, LL_USART_TXPIN_LEVEL_INVERTED);
+    LL_USART_Enable(OUT_UARTx);
 }
 
 

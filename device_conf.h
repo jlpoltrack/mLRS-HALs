@@ -208,6 +208,3 @@
   #define SX_USE_DCDC
   #define SX2_USE_DCDC
 #endif
-
-
-
