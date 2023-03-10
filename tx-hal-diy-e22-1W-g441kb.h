@@ -234,7 +234,7 @@ uint8_t fiveway_read(void)
 
 //-- POWER
 
-#define POWER_GAIN_DBM            12 // gain of a PA stage if present
+#define POWER_GAIN_DBM            13 // gain of a PA stage if present
 #define POWER_SX126X_MAX_DBM      SX126X_POWER_20_DBM // maximum allowed sx power
 #define POWER_USE_DEFAULT_RFPOWER_CALC
 
@@ -244,7 +244,7 @@ const rfpower_t rfpower_list[] = {
 	{ .dbm = POWER_3_DBM, .mW = 2 },
 	{ .dbm = POWER_10_DBM, .mW = 10 },
 	{ .dbm = POWER_20_DBM, .mW = 100 },
-	{ .dbm = POWER_24_DBM, .mW = 251 },
+	{ .dbm = POWER_24_DBM, .mW = 250 },
 	{ .dbm = POWER_27_DBM, .mW = 500 },
 	{ .dbm = POWER_30_DBM, .mW = 1000 },
 };
