@@ -13,16 +13,7 @@ extern "C" {
 // BootLoaderInit
 //-------------------------------------------------------
 
-// see AN2606 for system flash start location
-#ifdef STM32F1
-#define ST_BOOTLOADER_ADDRESS               0x1FFFF000 // = SystemMemory: F103T8 F103CB F103RC
-#elif defined STM32G4 || defined STM32L4 || defined STM32WL
-#define ST_BOOTLOADER_ADDRESS               0x1FFF0000
-#else
-  #warning ST_BOOTLOADER_ADDRESS no defined for chip !
-#endif
-
-void (*SysMemBootJump)(void);
+//Hack for G4, Enable Boot0 option bytes after flashing
 
 void BootLoaderInit(void)
 {
