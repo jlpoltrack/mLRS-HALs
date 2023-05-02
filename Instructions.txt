@@ -1,0 +1,12 @@
+For new hardware:
+
+Common_Conf (to make 19 Hz the default)
+
+For E28 Hardware:
+
+Update:
+
+Device Conf (Enables DC-DC Converter)
+FHSS (Selects Optimal 2.4 Freqs)
+
+TX - Use TX Hal (reassigns UARTs)
