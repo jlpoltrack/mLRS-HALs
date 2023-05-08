@@ -116,8 +116,8 @@
   #define DEVICE_IS_TRANSMITTER
   #define DEVICE_HAS_SX128x
   #define FREQUENCY_BAND_2P4_GHZ
-  #define SX_USE_DCDC
-  #define SX2_USE_DCDC
+  //#define SX_USE_DCDC
+  //#define SX2_USE_DCDC
 #endif
 
 #ifdef TX_DIY_E28_G431KB
@@ -156,7 +156,7 @@
   #define DEVICE_IS_RECEIVER
   #define DEVICE_HAS_SX126x
   #define FREQUENCY_BAND_70_CM_HAM
-  #define SX_USE_DCDC
+  //#define SX_USE_DCDC
 #endif
 
 #ifdef TX_DIY_E22_G431KB
@@ -164,7 +164,7 @@
   #define DEVICE_IS_TRANSMITTER
   #define DEVICE_HAS_SX126x
   #define FREQUENCY_BAND_70_CM_HAM
-  #define SX_USE_DCDC
+  //#define SX_USE_DCDC
 #endif
 
 #ifdef TX_DIY_E22DUAL_MODULE02_G491RE
