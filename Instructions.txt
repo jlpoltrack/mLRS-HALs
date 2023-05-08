@@ -10,3 +10,5 @@ Device Conf (Enables DC-DC Converter)
 FHSS (Selects Optimal 2.4 Freqs)
 
 TX - Use TX Hal (reassigns UARTs)
+
+RX - Use RX Hal
