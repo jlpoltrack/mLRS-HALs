@@ -47,10 +47,11 @@ typedef struct
 
 
 #define FRAME_TX_RX_HEADER_LEN  7
-#define FRAME_TX_RCDATA1_LEN    6
-#define FRAME_TX_RCDATA2_LEN    10
+#define FRAME_TX_RCDATA1_LEN    8
+#define FRAME_TX_RCDATA2_LEN    8
 #define FRAME_TX_PAYLOAD_LEN    64 // 82 - 10-6(rcdata) - 2(crc) = 64
 #define FRAME_RX_PAYLOAD_LEN    82
+#define SPARE_ADJUSTMENT		0
 
 
 PACKED(
@@ -89,8 +90,8 @@ typedef struct
 PACKED(
 typedef struct
 {
-    uint16_t ch8  : 10; // 10 bits
-    uint16_t ch9  : 10;
+    uint16_t ch8   : 10; // 10 bits
+    uint16_t ch9   : 10;
     uint16_t ch10  : 10;
     uint16_t ch11  : 10;
 
@@ -109,7 +110,7 @@ typedef struct
     tFrameRcData1 rc1; // 8 bytes
     uint16_t crc1;
     tFrameRcData2 rc2; // 8 bytes
-    uint8_t payload[64]; // = FRAME_TX_PAYLOAD_LEN
+    uint8_t payload[FRAME_TX_PAYLOAD_LEN - SPARE_ADJUSTMENT]; // = FRAME_TX_PAYLOAD_LEN
     uint16_t crc;
 }) tTxFrame; // 91 bytes
 
@@ -121,7 +122,7 @@ typedef struct
 {
     uint16_t sync_word; // 2 bytes
     tFrameStatus status; // 5 bytes
-    uint8_t payload[82]; // = FRAME_RX_PAYLOAD_LEN
+    uint8_t payload[FRAME_RX_PAYLOAD_LEN - SPARE_ADJUSTMENT]; // = FRAME_RX_PAYLOAD_LEN
     uint16_t crc;
 }) tRxFrame; // 91 bytes
 
@@ -145,7 +146,7 @@ typedef struct
     uint8_t FrequencyBand_XXX : 4; // TODO
     uint8_t Mode : 4;
 
-    uint8_t spare[72];
+    uint8_t spare[72 - SPARE_ADJUSTMENT];
 
     uint16_t crc; // 2bytes
 }) tTxBindFrame; // 91 bytes
@@ -164,7 +165,7 @@ typedef struct
     uint32_t firmware_version;
     char device_name_20[20];
 
-    uint8_t spare[55];
+    uint8_t spare[55 - SPARE_ADJUSTMENT];
 
     uint16_t crc; // 2bytes
 }) tRxBindFrame; // 91 bytes
@@ -207,7 +208,7 @@ typedef struct
     uint8_t SendRcChannels : 4;
     uint8_t __RadioStatusMethod : 4; // deprecated
 
-    uint8_t spare2[5];
+    uint8_t spare2[0];
 
     int8_t FailsafeOutChannelValues_Ch1_Ch12[12]; // -120 .. +120
     uint8_t FailsafeOutChannelValue_Ch13 : 2;
@@ -243,7 +244,7 @@ typedef struct
     uint8_t OutMode_allowed_mask;
     uint8_t Buzzer_allowed_mask;
 
-    uint8_t spare3[8];
+    uint8_t spare3[13 - SPARE_ADJUSTMENT];
 }) tRxCmdFrameRxSetupData; // 82 bytes
 
 
@@ -261,7 +262,7 @@ typedef struct
 
     tCmdFrameRxParameters RxParams; // 24 bytes
 
-    uint8_t spare3[31];
+    uint8_t spare3[36 - SPARE_ADJUSTMENT];
 }) tTxCmdFrameRxParams; // 64 bytes
 
 

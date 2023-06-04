@@ -11,8 +11,8 @@
 #pragma once
 
 
-#define VERSION             323 // leading zero makes it octal!
-#define VERSIONONLYSTR      "v0.3.23"
+#define VERSION             325 // leading zero makes it octal!
+#define VERSIONONLYSTR      "v0.3.25"
 #define SETUPLAYOUT         2   // this should be changed then Setup struct and/or serial changes
 
 
@@ -43,19 +43,17 @@
 
 #define SETUP_TX_CHANNELS_SOURCE        3 // 0: none, 1: mBridge (pin5), 2: In (In or pin1), 3: Crsf (pin5)
 
-#define SETUP_TX_CHANNEL_ORDER          CHANNEL_ORDER_AETR
+#define SETUP_TX_CHANNEL_ORDER          CHANNEL_ORDER_ETAR
 
 #define SETUP_TX_IN_MODE                0 // 0: IN_CONFIG_SBUS, 1: IN_CONFIG_SBUS_INVERTED
 
-#define SETUP_TX_SERIAL_BAUDRATE        4 // 0: 9600, 1: 19200, 2: 38400, 3: 57600, 4: 115200
+#define SETUP_TX_SERIAL_BAUDRATE        4 // 0: 9600, 1: 19200, 2: 38400, 3: 57600, 4: 115200, 5: 230400
 
 #define SETUP_TX_POWER                  CPOWER
 
 #define SETUP_TX_DIVERSITY              DIVERSITY // 0: default, 1: ANTENNA 1 if diversity available, 2: ANTENNA 2 if diversity available
 
-#define SETUP_TX_SERIAL_LINK_MODE       1 // 0: transparent, 1: mavlink
-
-#define SETUP_TX_SEND_RADIO_STATUS      1 // 0: off, 1: 1 Hz
+#define SETUP_TX_SEND_RADIO_STATUS      0 // 0: off, 1: 1 Hz
 
 #define SETUP_TX_BUZZER                 0 // 0: off, 1: LP, 2: rxLQ
 #define SETUP_TX_CLI_LINE_END           0 // 0: CR, 1: LF, 2: CRLF
@@ -86,9 +84,9 @@
 #define BIND_PHRASE                     "mlrs.0" // string of 6 characters, allowed are 'a'-'z','0'-'9','_','-','#','.'
 
 
-//#define SETUP_MODE                      MODE_50HZ
+#define SETUP_MODE                      MODE_50HZ
 //#define SETUP_MODE                      MODE_31HZ
-#define SETUP_MODE                      MODE_19HZ
+//#define SETUP_MODE                      MODE_19HZ
 
 
 //#define SETUP_RF_BAND                    SETUP_FREQUENCY_BAND_915_MHZ_FCC
@@ -99,9 +97,9 @@
 // System Configs
 //-------------------------------------------------------
 
-#define MODE_50HZ_SEND_FRAME_TMO        10 // just needs to be larger than toa, not critical
-#define MODE_31HZ_SEND_FRAME_TMO        15 // just needs to be larger than toa, not critical
-#define MODE_19HZ_SEND_FRAME_TMO        25 // just needs to be larger than toa, not critical
+#define MODE_50HZ_SEND_FRAME_TMO        15 // just needs to be larger than toa, not critical
+#define MODE_31HZ_SEND_FRAME_TMO        25 // just needs to be larger than toa, not critical
+#define MODE_19HZ_SEND_FRAME_TMO        35 // just needs to be larger than toa, not critical
 
 #define FHSS_NUM_BAND_433_MHZ                 2 // 2 since 1 is needed for bind
 #define FHSS_NUM_BAND_70_CM_HAM_19HZ_MODE     12 // to match 2.4 GHz at 19 Hz
@@ -113,7 +111,7 @@
 #define FHSS_NUM_BAND_2P4_GHZ_31HZ_MODE       18
 #define FHSS_NUM_BAND_2P4_GHZ                 24
 
-#define FRAME_TX_RX_LEN                 91 // we currently only support equal len
+#define FRAME_TX_RX_LEN                 78 // we currently only support equal len
 
 #define CONNECT_TMO_MS                  1250 // time to disconnect, was 500, then 750 to better handle 19 Hz mode, now 1250
 

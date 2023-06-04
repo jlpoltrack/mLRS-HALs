@@ -48,24 +48,13 @@ typedef struct {
 const tSxLoraConfiguration Sx128xLoraConfiguration[] = {
     { .SpreadingFactor = SX1280_LORA_SF5,
       .Bandwidth = SX1280_LORA_BW_800,
-      .CodingRate = SX1280_LORA_CR_LI_4_5,
-      .PreambleLength = 12,
-      .HeaderType = SX1280_LORA_HEADER_DISABLE,
-      .PayloadLength = FRAME_TX_RX_LEN,
-      .CrcEnabled = SX1280_LORA_CRC_DISABLE,
-      .InvertIQ = SX1280_LORA_IQ_NORMAL,
-      .TimeOverAir = 7892,
-      .ReceiverSensitivity = -105,
-    },
-    { .SpreadingFactor = SX1280_LORA_SF5,
-      .Bandwidth = SX1280_LORA_BW_800,
       .CodingRate = SX1280_LORA_CR_LI_4_7,
       .PreambleLength = 12,
       .HeaderType = SX1280_LORA_HEADER_DISABLE,
       .PayloadLength = FRAME_TX_RX_LEN,
       .CrcEnabled = SX1280_LORA_CRC_DISABLE,
       .InvertIQ = SX1280_LORA_IQ_NORMAL,
-      .TimeOverAir = 13418,
+      .TimeOverAir = 10177,
       .ReceiverSensitivity = -105,
     },
     { .SpreadingFactor = SX1280_LORA_SF6,
@@ -76,8 +65,19 @@ const tSxLoraConfiguration Sx128xLoraConfiguration[] = {
       .PayloadLength = FRAME_TX_RX_LEN,
       .CrcEnabled = SX1280_LORA_CRC_DISABLE,
       .InvertIQ = SX1280_LORA_IQ_NORMAL,
-      .TimeOverAir = 23527,
+      .TimeOverAir = 17833,
       .ReceiverSensitivity = -108,
+    },
+    { .SpreadingFactor = SX1280_LORA_SF7,
+      .Bandwidth = SX1280_LORA_BW_800,
+      .CodingRate = SX1280_LORA_CR_LI_4_7,
+      .PreambleLength = 12,
+      .HeaderType = SX1280_LORA_HEADER_DISABLE,
+      .PayloadLength = FRAME_TX_RX_LEN,
+      .CrcEnabled = SX1280_LORA_CRC_DISABLE,
+      .InvertIQ = SX1280_LORA_IQ_NORMAL,
+      .TimeOverAir = 3104,
+      .ReceiverSensitivity = -112,
     }
 };
 
@@ -151,20 +151,27 @@ class Sx128xDriverCommon : public Sx128xDriverBase
 
     void Configure(void)
     {
-        SetPacketType(SX1280_PACKET_TYPE_LORA);
-
-        SetAutoFs(true);
-
-        SetLnaGainMode(SX1280_LNAGAIN_MODE_HIGH_SENSITIVITY);
-
-        //SetTxParams(calc_sx_power(Config.Power), SX1280_RAMPTIME_04_US);
-        SetRfPower_dbm(Config.Power_dbm);
-
-        SetLoraConfigurationByIndex(Config.LoraConfigIndex);
-
-#ifdef LORA_SYNCWORD
-        SetSyncWord(LORA_SYNCWORD);
-#endif
+    	if (Config.Mode == MODE_50HZ) {
+			SetPacketType(SX1280_PACKET_TYPE_FLRC);
+			SetAutoFs(true);
+			SetLnaGainMode(SX1280_LNAGAIN_MODE_HIGH_SENSITIVITY);
+			SetRfPower_dbm(Config.Power_dbm);
+			SetModulationParamsFLRC(SX1280_FLRC_BR_0_650_BW_0_6, SX1280_FLRC_CR_1_2, SX1280_FLRC_BT_1);
+			SetPacketParamsFLRC(SX1280_FLRC_PREAMBLE_LENGTH_32_BITS, SX1280_FLRC_SYNCWORD_LEN_P32S, SX1280_FLRC_SYNCWORD_MATCH_1,
+					SX1280_FLRC_PACKET_TYPE_FIXED_LENGTH, FRAME_TX_RX_LEN, SX1280_FLRC_CRC_LENGTH_4_BYTE,
+					27368, 1836279427, SX1280_FLRC_CR_1_2);  // CrcSeed is 'j', 'p'.  SyncWord is 'm', 'l', 'r', 's'
+    	}
+    	else {
+			SetPacketType(SX1280_PACKET_TYPE_LORA);
+			SetAutoFs(true);
+			SetLnaGainMode(SX1280_LNAGAIN_MODE_HIGH_SENSITIVITY);
+			//SetTxParams(calc_sx_power(Config.Power), SX1280_RAMPTIME_04_US);
+			SetRfPower_dbm(Config.Power_dbm);
+			SetLoraConfigurationByIndex(Config.LoraConfigIndex);
+			#ifdef LORA_SYNCWORD
+					SetSyncWord(LORA_SYNCWORD);
+			#endif
+    	}
 
         SetBufferBaseAddress(0, 0);
 

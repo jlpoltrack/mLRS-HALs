@@ -1,0 +1,21 @@
+Alternate frame work:
+
+Channels redone:
+8x 10-Bit
+8x 6-Bit
+
+16 Bytes, same as current
+
+Reduced packet size to 78 bytes to have use highest coding rate
+
+Update:
+
+frame_types.h, lines 52 to 54:
+
+#define FRAME_TX_PAYLOAD_LEN    51 // 69 - 16(rcdata) - 2(crc) = 51
+#define FRAME_RX_PAYLOAD_LEN    69 // 78 - 2(sync) - 5(status) - 2(crc) = 69
+#define SPARE_ADJUSTMENT		13 // Normally have 91 byte packet, want 78 so subtract 13
+
+common_conf.h, line 114:
+
+#define FRAME_TX_RX_LEN                 78 // we currently only support equal len
