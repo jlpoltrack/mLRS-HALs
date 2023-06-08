@@ -195,7 +195,7 @@ void led_red_toggle(void) { gpio_toggle(LED_RED); }
 
 //-- POWER
 
-#define POWER_GAIN_DBM            13 // gain of a PA stage if present
+#define POWER_GAIN_DBM            13 // Use 10 for E220-900M30S
 #define POWER_SX126X_MAX_DBM      SX126X_POWER_20_DBM // maximum allowed sx power
 #define POWER_USE_DEFAULT_RFPOWER_CALC
 
