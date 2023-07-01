@@ -70,6 +70,7 @@
 
 #ifdef BOARD1
 #define RECVR_MAC {0x30, 0xAE, 0xA4, 0x38, 0x8A, 0xD4}  // This is the Mac of the Tx module
+//#define RECVR_MAC {0xA4, 0xCF, 0x12, 0x0A, 0x6A, 0xCC}  // This is the Mac of the Tx module
 #define TX_PIN     0 // 0 for PC module, set to 14 for Tx module
 #define RX_PIN     0 // 0 for PC module, set to 12 for Tx module
 #else
@@ -80,6 +81,7 @@
 
 // Heltec WiFi Kit: 3C:61:05:0D:F6:0C
 // 2.4 Tx module: 30:AE:A4:38:8A:D4
+// 70 cm module: A4:CF:12:0A:6A:CC
 
 
 #define WIFI_CHAN  13 // 12-13 only legal in US in lower power mode, do not use 14
