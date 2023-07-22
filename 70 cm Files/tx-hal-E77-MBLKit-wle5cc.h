@@ -45,7 +45,7 @@
 // UARTF = --
 // SWUART= debug port
 
-#define UARTB_USE_UART1_REMAPPED // serial // PA2,PA3
+#define UARTB_USE_UART1 // serial // PA2,PA3
 #define UARTB_BAUD                TX_SERIAL_BAUDRATE
 #define UARTB_USE_TX
 #define UARTB_TXBUFSIZE           TX_SERIAL_TXBUFSIZE
@@ -53,7 +53,7 @@
 #define UARTB_USE_RX
 #define UARTB_RXBUFSIZE           TX_SERIAL_RXBUFSIZE
 
-#define UARTC_USE_UART1_REMAPPED // com USB/CLI // PA2,PA3
+#define UARTC_USE_UART1 // com USB/CLI // PA2,PA3
 #define UARTC_BAUD                TX_COM_BAUDRATE
 #define UARTC_USE_TX
 #define UARTC_TXBUFSIZE           TX_COM_TXBUFSIZE
@@ -257,7 +257,7 @@ void in_set_inverted(void)
 
 //-- Button
 
-#define BUTTON                    IO_PA0
+#define BUTTON                    IO_PA1
 
 void button_init(void)
 {
@@ -293,7 +293,7 @@ void led_red_toggle(void) { gpio_toggle(LED_RED); }
 
 //-- SystemBootLoader
 
-#define BOOT_BUTTON               IO_PA1
+#define BOOT_BUTTON               IO_PA0
 
 extern "C" { void delay_ms(uint16_t ms); }
 
