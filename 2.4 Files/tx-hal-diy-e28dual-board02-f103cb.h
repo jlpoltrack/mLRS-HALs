@@ -7,17 +7,35 @@
 // hal
 //********************************************************
 
+//#define MLRS_FEATURE_JRPIN5
+//#define MLRS_FEATURE_IN
+//#define MLRS_FEATURE_DIVERSITY
+//#define MLRS_FEATURE_NO_DIVERSITY
+
 //-------------------------------------------------------
 // TX DIY DUAL-E28 BOARD02 v010 STM32F103CB
 //-------------------------------------------------------
 
 //#define DEVICE_HAS_DIVERSITY
-//#define DEVICE_HAS_IN
 #define DEVICE_HAS_JRPIN5 // requires diode from Tx to Rx soldered on the board
-#define DEVICE_HAS_COM_OR_DEBUG // is selected by DEBUG_ENABLED define
+//#define DEVICE_HAS_IN
+#define DEVICE_HAS_DEBUG_SWUART
+#define MLRS_DEV_FEATURE_FLRC
 
-#ifdef DEBUG_ENABLED
-#undef DEBUG_ENABLED
+
+#ifdef MLRS_FEATURE_JRPIN5
+  #undef DEVICE_HAS_IN
+  #define DEVICE_HAS_JRPIN5
+#endif
+#ifdef MLRS_FEATURE_IN
+  #undef DEVICE_HAS_JRPIN5
+  #define DEVICE_HAS_IN
+#endif
+#ifdef MLRS_FEATURE_DIVERSITY
+  #define DEVICE_HAS_DIVERSITY
+#endif
+#ifdef MLRS_FEATURE_NO_DIVERSITY
+  #undef DEVICE_HAS_DIVERSITY
 #endif
 
 
@@ -30,6 +48,8 @@
 
 #define EE_START_PAGE             124 // 128 kB flash, 1 kB page
 
+#define MICROS_TIMx               TIM3
+
 
 //-- UARTS
 // UARTB = serial port
@@ -37,7 +57,7 @@
 // UART = JR bay pin5 (SPORT)
 // UARTE = in port, SBus or whatever
 
-#define UARTB_USE_UART1 // serial
+#define UARTB_USE_UART3 // serial
 #define UARTB_BAUD                TX_SERIAL_BAUDRATE
 #define UARTB_USE_TX
 #define UARTB_TXBUFSIZE           TX_SERIAL_TXBUFSIZE
@@ -45,7 +65,7 @@
 #define UARTB_USE_RX
 #define UARTB_RXBUFSIZE           TX_SERIAL_RXBUFSIZE
 
-#define UARTC_USE_UART3 // COM (CLI)
+#define UARTC_USE_UART1 // COM (CLI)
 #define UARTC_BAUD                115200
 #define UARTC_USE_TX
 #define UARTC_TXBUFSIZE           TX_COM_TXBUFSIZE
@@ -79,13 +99,12 @@
 #define JRPIN5_RX_SET_INVERTED    gpio_high(JRPIN5_RX_XOR)
 #endif
 
-#define UARTF_USE_UART3 // debug
-#define UARTF_BAUD                115200
-#define UARTF_USE_TX
-#define UARTF_TXBUFSIZE           512
-#define UARTF_USE_TX_ISR
-//#define UARTF_USE_RX
-//#define UARTF_RXBUFSIZE           512
+#define SWUART_USE_TIM2 // debug
+#define SWUART_TX_IO              IO_PB7 // is the BUZZER/EXT pad
+#define SWUART_BAUD               115200
+#define SWUART_USE_TX
+#define SWUART_TXBUFSIZE          512
+//#define SWUART_TIM_IRQ_PRIORITY   11
 
 
 //-- SX1: SX12xx & SPI
@@ -290,13 +309,6 @@ void led_red_on(void) { gpio_high(LED_RED); }
 void led_red_toggle(void) { gpio_toggle(LED_RED); }
 
 
-//-- Position Switch
-
-void pos_switch_init(void)
-{
-}
-
-
 //-- POWER
 
 #define POWER_GAIN_DBM            27 // gain of a PA stage if present
@@ -322,7 +334,7 @@ uint32_t porta[] = {
 };
 
 uint32_t portb[] = {
-    LL_GPIO_PIN_0, LL_GPIO_PIN_1, LL_GPIO_PIN_3, LL_GPIO_PIN_4, LL_GPIO_PIN_5, LL_GPIO_PIN_6,
+    LL_GPIO_PIN_0, LL_GPIO_PIN_1, LL_GPIO_PIN_3, LL_GPIO_PIN_4, LL_GPIO_PIN_5, LL_GPIO_PIN_6, LL_GPIO_PIN_7,
     LL_GPIO_PIN_8, LL_GPIO_PIN_9, LL_GPIO_PIN_10, LL_GPIO_PIN_11,
     LL_GPIO_PIN_12, LL_GPIO_PIN_13, LL_GPIO_PIN_14, LL_GPIO_PIN_15,
 };

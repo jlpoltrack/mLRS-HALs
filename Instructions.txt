@@ -1,16 +1,1 @@
-For new hardware:
-
-For E28 Hardware:
-
-Update:
-
-FHSS (Selects Optimal 2.4 Freqs)
-Replace sx128x_drive.h (High reliability modes)
-
-Frames + Frame Types
-
-TX - Use TX Hal (reassigns UARTs)
-
-
-
-RX - Use RX Hal
+TODO
