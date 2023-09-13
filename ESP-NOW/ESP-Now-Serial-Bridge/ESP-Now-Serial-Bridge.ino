@@ -39,11 +39,11 @@
 #include <WiFi.h>
 #include <esp_wifi.h>
 
-#define BOARD2 // BOARD1 for PC Side
+#define BOARD1 // BOARD1 for PC Side
 
 #ifdef BOARD1
-//#define RECVR_MAC {0xA4, 0xCF, 0x12, 0x0A, 0x6A, 0xCC}  // This is the Mac of the NodeMCU-32S
-#define RECVR_MAC {0xD4, 0xD4, 0xDA, 0x9D, 0x08, 0x2C}  // This is the Mac of the AtomM5
+//#define RECVR_MAC {0xA4, 0xCF, 0x12, 0x0A, 0x6A, 0xCC}  // This is the Mac of the NodeMCU-32S (STM32F1)
+#define RECVR_MAC {0xD4, 0xD4, 0xDA, 0x9D, 0x08, 0x2C}  // This is the Mac of the AtomM5 (FRM303)
 #define TX_PIN     1 // default UART0 is pin 1 (shared by USB)
 #define RX_PIN     3 // default UART0 is pin 3 (shared by USB)
 #else
