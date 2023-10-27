@@ -25,7 +25,7 @@
   #define DEVICE_HAS_DIVERSITY
 #endif
 #ifdef MLRS_FEATURE_NO_DIVERSITY
-  #undef DEVICE_HAS_DIVERSITY
+  #undef DEVICE_HAS_DIVERSITY 
 #endif
 
 
