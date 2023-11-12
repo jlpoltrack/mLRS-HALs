@@ -14,6 +14,10 @@
 #define DEVICE_HAS_OUT
 #define DEVICE_HAS_SERIAL_OR_DEBUG
 
+#ifdef DEBUG_ENABLED
+#undef DEBUG_ENABLED
+#endif
+
 //-- Timers, Timing, EEPROM, and such stuff
 
 #define DELAY_USE_DWT
