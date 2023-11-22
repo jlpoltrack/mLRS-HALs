@@ -1,0 +1,20 @@
+Goals:
+
+Keep original rates (50/31/19)
+Reduced packet size to enable LI 4/7 (SX128x) or 4/8 (SX126x/SX127x) CR
+Packet reduced to 60 bytes from 91
+Had to scrap setting specific values for channels on failsafe (use no signal anyways)
+For MAVFTP, Rx needs to be dropped 1 baud rate level
+FLRC rate increased to 143 Hz
+
+Edits:
+
+Updated Common_Conf.h
+Updated Frame_Types.h
+Updated frames.h
+Updated mavlink_interface_rx.h
+Updated sx128x_driver.h
+
+ToDo:
+
+Update SX126x, SX127x drivers
