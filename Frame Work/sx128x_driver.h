@@ -70,7 +70,7 @@ const tSxLoraConfiguration Sx128xLoraConfiguration[] = {
 
 
 const tSxFlrcConfiguration Sx128xFlrcConfiguration[] = {
-    { .Bandwidth = SX1280_FLRC_BR_0_650_BW_0_6,
+    { .Bandwidth = SX1280_FLRC_BR_0_520_BW_0_6,
       .CodingRate = SX1280_FLRC_CR_1_2,
       .Bt = SX1280_FLRC_BT_1,
       .AGCPreambleLength = SX1280_FLRC_PREAMBLE_LENGTH_32_BITS,

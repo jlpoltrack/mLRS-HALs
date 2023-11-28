@@ -204,14 +204,14 @@ void led_red_toggle(void) { gpio_toggle(LED_RED); }
 
 //-- POWER
 
-#define POWER_GAIN_DBM            17 // gain of a PA stage if present
+#define POWER_GAIN_DBM            14 // gain of a PA stage if present
 #define POWER_SX1276_MAX_DBM      SX1276_OUTPUT_POWER_MAX // maximum allowed sx power
 #define POWER_USE_DEFAULT_RFPOWER_CALC
 
 #define RFPOWER_DEFAULT           1 // index into rfpower_list array
 
 const rfpower_t rfpower_list[] = {
-    	{ .dbm = POWER_17_DBM, .mW = 50 },
+    { .dbm = POWER_17_DBM, .mW = 50 },
 	{ .dbm = POWER_24_DBM, .mW = 250 },
 	{ .dbm = POWER_27_DBM, .mW = 500 },
 	{ .dbm = POWER_30_DBM, .mW = 1000 },
