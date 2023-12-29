@@ -42,17 +42,17 @@
 #define BOARD1 // BOARD1 for PC Side
 
 #ifdef BOARD1
-#define RECVR_MAC {0xA4, 0xCF, 0x12, 0x0A, 0x6A, 0xCC}    // This is the Mac of the NodeMCU-32S (2.4 E28 Dual)
+//#define RECVR_MAC {0xA4, 0xCF, 0x12, 0x0A, 0x6A, 0xCC}    // This is the Mac of the NodeMCU-32S (2.4 E28 Dual)
 //#define RECVR_MAC {0xD4, 0xD4, 0xDA, 0x9D, 0x08, 0x2C}  // This is the Mac of the AtomM5 (R9M)
-//#define RECVR_MAC {0x30, 0xAE, 0xA4, 0x38, 0x8A, 0xD4}    // This is the Mac of the other ESP32, NodeMCU, E5 Mini
+#define RECVR_MAC {0x30, 0xAE, 0xA4, 0x38, 0x8A, 0xD4}    // This is the Mac of the other ESP32, NodeMCU, E5 Mini
 #define TX_PIN     1 // default UART0 is pin 1 (shared by USB)
 #define RX_PIN     3 // default UART0 is pin 3 (shared by USB)
 #else
 #define RECVR_MAC {0x3C, 0x61, 0x05, 0x0D, 0xF6, 0x0C}  // This is the Mac of the Heltec Wifi Kit 32
-#define TX_PIN     21 // This is for the AtomM5
-#define RX_PIN     25 // This is for the AtomM5
-//#define TX_PIN     14 // This is for DoIt Devkits
-//#define RX_PIN     12 // This is for DoIt Devkits
+//#define TX_PIN     21 // This is for the AtomM5
+//#define RX_PIN     25 // This is for the AtomM5
+#define TX_PIN     12 // This is for DoIt Devkits
+#define RX_PIN     14 // This is for DoIt Devkits
 
 #endif
 

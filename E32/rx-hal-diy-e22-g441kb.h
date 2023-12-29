@@ -183,7 +183,7 @@ bool button_pressed(void)
 //-- LEDs
 
 #define LED_GREEN 		        IO_PA2
-#define LED_RED		                IO_PA1
+#define LED_RED		            IO_PA1
 
 void leds_init(void)
 {
