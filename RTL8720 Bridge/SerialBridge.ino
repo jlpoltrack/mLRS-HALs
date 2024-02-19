@@ -9,7 +9,7 @@ char channel[] = "128";       // Set the AP's channel
 
 //int status = WL_IDLE_STATUS;  // Wifi status
 
-char buffer[256];             // Working buffer
+char buffer[1024];             // Working buffer
 
 WiFiServer server(5760);      // MP Port
 
@@ -48,13 +48,17 @@ void loop() {
     digitalWrite(PA14, 1);    // Green Led on
     
     if (client.available()) {
-      memset(buffer, 0, 256);
+      memset(buffer, 0, 1024);
       int n = client.read((uint8_t*)(&buffer[0]), sizeof(buffer));
       Serial1.write(buffer, n);
     }
 
-    if (Serial1.available() > 128) {
-      memset(buffer, 0, 256);
+    uint16_t serialUsed = Serial1.available();
+
+    if (serialUsed > 1024) {Serial.println(serialUsed);}
+
+    if (serialUsed > 128) { 
+      memset(buffer, 0, 1024);
       int n = Serial1.readBytes((uint8_t*)(&buffer[0]), sizeof(buffer));
       client.write(buffer, n); 
     }
