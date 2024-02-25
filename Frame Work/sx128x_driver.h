@@ -10,6 +10,9 @@
 #define SX128X_DRIVER_H
 #pragma once
 
+#define SX_USE_DCDC
+#define SX2_USE_DCDC
+
 
 //-------------------------------------------------------
 // SX Driver
@@ -159,9 +162,9 @@ class Sx128xDriverCommon : public Sx128xDriverBase
                             config->PacketType,
                             config->PayloadLength,
                             config->CrcLength,
-                            config->CrcSeed,
-                            sync_word,
-                            config->CodingRate);
+                            config->CrcSeed);
+
+        SetSyncWordFLRC(sync_word, config->CodingRate);
     }
 
     void SetFlrcConfigurationByIndex(uint8_t index, uint32_t sync_word)

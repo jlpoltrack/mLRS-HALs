@@ -14,7 +14,7 @@
 #include "../Common/mavlink/fmav_extension.h"
 #include "../Common/libs/filters.h"
 #ifdef USE_FEATURE_MAVLINKX
-#include "../Common/thirdparty/fmav_mavlinkx.h"
+#include "../Common/thirdparty/mavlinkx.h"
 #include "../Common/libs/fifo.h"
 #endif
 
@@ -31,7 +31,7 @@ static inline bool connected(void);
 #define MAVLINK_OPT_FAKE_PARAMFTP   2 // 0: off, 1: always, 2: determined from mode & baudrate
 
 
-class MavlinkBase
+class tRxMavlink
 {
   public:
     void Init(void);
@@ -58,7 +58,6 @@ class MavlinkBase
 
     // fields for link in -> parser -> serial out
     fmav_status_t status_link_in;
-    fmav_result_t result_link_in;
     uint8_t buf_link_in[MAVLINK_BUF_SIZE]; // buffer for link in parser
     fmav_status_t status_serial_out; // not needed, status_link_in could be used, but clearer so
     fmav_message_t msg_serial_out; // could be avoided by more efficient coding, is used only momentarily/locally
@@ -66,7 +65,6 @@ class MavlinkBase
     // fields for serial in -> parser -> link out
 #ifdef USE_FEATURE_MAVLINKX
     fmav_status_t status_serial_in;
-    fmav_result_t result_serial_in;
     uint8_t buf_serial_in[MAVLINK_BUF_SIZE]; // buffer for serial in parser
     fmav_message_t msg_link_out; // could be avoided by more efficient coding, is used only momentarily/locally
     FifoBase<char,512> fifo_link_out; // needs to be at least 82 + 280
@@ -112,11 +110,10 @@ class MavlinkBase
 };
 
 
-void MavlinkBase::Init(void)
+void tRxMavlink::Init(void)
 {
     fmav_init();
 
-    result_link_in = {};
     status_link_in = {};
     status_serial_out = {};
 
@@ -124,7 +121,6 @@ void MavlinkBase::Init(void)
     fmavX_init();
     fmavX_config_compression((Config.Mode == MODE_19HZ) ? 1 : 0); // use compression only in 19 Hz mode
 
-    result_serial_in = {};
     status_serial_in = {};
     fifo_link_out.Init();
     bytes_parser_in = 0;
@@ -153,7 +149,7 @@ void MavlinkBase::Init(void)
 // rc_out is the rc data stored in out class
 // after handling of channel order and failsafes.
 // Need to take care of failsafe flag however.
-void MavlinkBase::SendRcData(tRcData* rc_out, bool failsafe)
+void tRxMavlink::SendRcData(tRcData* rc_out, bool failsafe)
 {
     if (Setup.Rx.SendRcChannels == SEND_RC_CHANNELS_OFF) return;
 
@@ -182,7 +178,7 @@ void MavlinkBase::SendRcData(tRcData* rc_out, bool failsafe)
 }
 
 
-void MavlinkBase::Do(void)
+void tRxMavlink::Do(void)
 {
     uint32_t tnow_ms = millis32();
     bool inject_radio_link_stats = false;
@@ -200,16 +196,18 @@ void MavlinkBase::Do(void)
 
     // parse serial in -> link out
 #ifdef USE_FEATURE_MAVLINKX
+    fmav_result_t result;
     if (fifo_link_out.HasSpace(290)) { // we have space for a full MAVLink message, so can safely parse
         while (serial.available()) {
             char c = serial.getc();
             bytes_parser_in++; // memorize it is still in processing
-            if (fmav_parse_and_check_to_frame_buf(&result_serial_in, buf_serial_in, &status_serial_in, c)) {
+            fmav_parse_and_check_to_frame_buf(&result, buf_serial_in, &status_serial_in, c);
+            if (result.res == FASTMAVLINK_PARSE_RESULT_OK) {
 
                 // TODO: this could be be done more efficiently by not going via msg_link_out
                 // but by directly going buf_serial_in -> _buf
 
-                fmav_frame_buf_to_msg(&msg_link_out, &result_serial_in, buf_serial_in);
+                fmav_frame_buf_to_msg(&msg_link_out, &result, buf_serial_in); // requires RESULT_OK
 
                 uint16_t len;
                 if (Setup.Rx.SerialLinkMode == SERIAL_LINK_MODE_MAVLINK_X) {
@@ -283,7 +281,8 @@ void MavlinkBase::Do(void)
             generate_radio_link_flow_control();
         } else {
             generate_radio_status();
-        } */
+        }
+*/
         generate_radio_status();
         send_msg_serial_out();
     }
@@ -309,7 +308,7 @@ void MavlinkBase::Do(void)
 }
 
 
-void MavlinkBase::FrameLost(void)
+void tRxMavlink::FrameLost(void)
 {
 #ifdef USE_FEATURE_MAVLINKX
     // reset parser link in -> serial out
@@ -323,28 +322,29 @@ typedef enum {
 } MAVFTPOPCODEENUM;
 
 
-void MavlinkBase::putc(char c)
+void tRxMavlink::putc(char c)
 {
     // parse link in -> serial out
+    fmav_result_t result;
 #ifdef USE_FEATURE_MAVLINKX
-    uint8_t res;
     if (Setup.Rx.SerialLinkMode == SERIAL_LINK_MODE_MAVLINK_X) {
-        res = fmavX_parse_and_check_to_frame_buf(&result_link_in, buf_link_in, &status_link_in, c);
+        fmavX_parse_and_check_to_frame_buf(&result, buf_link_in, &status_link_in, c);
     } else {
-        res = fmav_parse_and_check_to_frame_buf(&result_link_in, buf_link_in, &status_link_in, c);
+        fmav_parse_and_check_to_frame_buf(&result, buf_link_in, &status_link_in, c);
     }
-    if (res) {
 #else
-    if (fmav_parse_and_check_to_frame_buf(&result_link_in, buf_link_in, &status_link_in, c)) {
+    fmav_parse_and_check_to_frame_buf(&result, buf_link_in, &status_link_in, c);
 #endif
-        fmav_frame_buf_to_msg(&msg_serial_out, &result_link_in, buf_link_in);
+    if (result.res == FASTMAVLINK_PARSE_RESULT_OK) {
+        fmav_frame_buf_to_msg(&msg_serial_out, &result, buf_link_in); // requires RESULT_OK
 
 #if MAVLINK_OPT_FAKE_PARAMFTP > 0
 #if MAVLINK_OPT_FAKE_PARAMFTP > 1
         bool force_param_list = true;
         switch (Config.Mode) {
         case MODE_FLRC_111HZ: force_param_list = (Config.SerialBaudrate > 115200); break; // 230400 bps and lower is ok for mftp
-        case MODE_50HZ: case MODE_FSK: force_param_list = (Config.SerialBaudrate > 57600); break; // 57600 bps and lower is ok for mftp
+        case MODE_50HZ:
+        case MODE_FSK_50HZ: force_param_list = (Config.SerialBaudrate > 57600); break; // 57600 bps and lower is ok for mftp
         case MODE_31HZ: force_param_list = (Config.SerialBaudrate > 38400); break; // 57600 bps and lower is ok for mftp
         case MODE_19HZ: force_param_list = (Config.SerialBaudrate > 19200); break; // 38400 bps and lower is ok for mftp
         }
@@ -361,7 +361,7 @@ void MavlinkBase::putc(char c)
                 (opcode == MAVFTP_OPCODE_OpenFileRO)) {
                 if (!strncmp(url, "@PARAM/param.pck", 16)) {
                     url[1] = url[7] = url[13] = 'x'; // now fake it to "@xARAM/xaram.xck"
-                    fmav_msg_recalculate_crc(&msg_serial_out); // we need to recalculate CRC
+                    fmav_msg_recalculate_crc(&msg_serial_out); // we need to recalculate CRC, requires RESULT_OK
                 }
             }
         }
@@ -372,7 +372,7 @@ void MavlinkBase::putc(char c)
 }
 
 
-bool MavlinkBase::available(void)
+bool tRxMavlink::available(void)
 {
 #ifdef USE_FEATURE_MAVLINKX
     return fifo_link_out.Available();
@@ -382,7 +382,7 @@ bool MavlinkBase::available(void)
 }
 
 
-uint8_t MavlinkBase::getc(void)
+uint8_t tRxMavlink::getc(void)
 {
     bytes_link_out++;
     bytes_link_out_cnt++;
@@ -395,7 +395,7 @@ uint8_t MavlinkBase::getc(void)
 }
 
 
-void MavlinkBase::flush(void)
+void tRxMavlink::flush(void)
 {
 #ifdef USE_FEATURE_MAVLINKX
     fifo_link_out.Flush();
@@ -404,7 +404,7 @@ void MavlinkBase::flush(void)
 }
 
 
-void MavlinkBase::send_msg_serial_out(void)
+void tRxMavlink::send_msg_serial_out(void)
 {
     uint16_t len = fmav_msg_to_frame_buf(_buf, &msg_serial_out);
 
@@ -417,7 +417,7 @@ void MavlinkBase::send_msg_serial_out(void)
 //-------------------------------------------------------
 // for the txbuf rate-based mechanism see design_decissions.h for details
 
-uint16_t MavlinkBase::serial_in_available(void)
+uint16_t tRxMavlink::serial_in_available(void)
 {
 #ifdef USE_FEATURE_MAVLINKX
     // count all bytes still in processing
@@ -428,7 +428,7 @@ uint16_t MavlinkBase::serial_in_available(void)
 }
 
 
-bool MavlinkBase::handle_txbuf_ardupilot(uint32_t tnow_ms)
+bool tRxMavlink::handle_txbuf_ardupilot(uint32_t tnow_ms)
 {
     // work out state
     bool inject_radio_status = false;
@@ -538,7 +538,7 @@ if(txbuf>90) dbg.puts("-20 "); else dbg.puts("0   ");
 
 
 // this method should be selected for PX4 and currently may be a useful alternative for Ardupilot
-bool MavlinkBase::handle_txbuf_method_b(uint32_t tnow_ms)
+bool tRxMavlink::handle_txbuf_method_b(uint32_t tnow_ms)
 {
     // work out state
     bool inject_radio_status = false;
@@ -667,7 +667,7 @@ if(txbuf>50) dbg.puts("*1.025 "); else dbg.puts("*1 ");
 //-------------------------------------------------------
 
 // see design_decissions.h for details
-void MavlinkBase::generate_radio_status(void)
+void tRxMavlink::generate_radio_status(void)
 {
 uint8_t rssi, remrssi, txbuf, noise;
 
@@ -690,7 +690,7 @@ uint8_t rssi, remrssi, txbuf, noise;
 }
 
 
-void MavlinkBase::generate_rc_channels_override(void)
+void tRxMavlink::generate_rc_channels_override(void)
 {
     fmav_msg_rc_channels_override_pack(
         &msg_serial_out,
@@ -707,7 +707,10 @@ void MavlinkBase::generate_rc_channels_override(void)
 }
 
 
-void MavlinkBase::generate_radio_rc_channels(void)
+#if !defined FASTMAVLINK_MSG_ID_RADIO_RC_CHANNELS_DEV
+#error Please update the mavlink repo!
+
+void tRxMavlink::generate_radio_rc_channels(void)
 {
 int16_t channels[24]; // FASTMAVLINK_MSG_RADIO_RC_CHANNELS_FIELD_CHANNELS_NUM = 24
 
@@ -733,10 +736,11 @@ int16_t channels[24]; // FASTMAVLINK_MSG_RADIO_RC_CHANNELS_FIELD_CHANNELS_NUM = 
 }
 
 
-void MavlinkBase::generate_radio_link_stats(void)
+void tRxMavlink::generate_radio_link_stats(void)
 {
 uint8_t flags, rx_rssi1, rx_rssi2, tx_rssi;
 
+/*
     flags = 0; // rssi are in MAVLink units
 
     if (USE_ANTENNA1 && USE_ANTENNA2) {
@@ -751,6 +755,22 @@ uint8_t flags, rx_rssi1, rx_rssi2, tx_rssi;
     }
 
     tx_rssi = rssi_i8_to_ap(stats.received_rssi);
+*/
+    // Rssi are in negative dBm. Values 0..253 corresponds to 0..-253 dBm. 254 = no link connection, 255 = unknown
+    flags = RADIO_LINK_STATS_FLAGS_RSSI_DBM;
+
+    if (USE_ANTENNA1 && USE_ANTENNA2) {
+        rx_rssi1 = rssi_i8_to_mavradio(stats.last_rssi1, connected());
+        rx_rssi2 = rssi_i8_to_mavradio(stats.last_rssi2, connected());
+    } else if (USE_ANTENNA2) {
+        rx_rssi1 = UINT8_MAX;
+        rx_rssi2 = rssi_i8_to_mavradio(stats.last_rssi2, connected());
+    } else {
+        rx_rssi1 = rssi_i8_to_mavradio(stats.last_rssi1, connected());
+        rx_rssi2 = UINT8_MAX;
+    }
+
+    tx_rssi = rssi_i8_to_mavradio(stats.received_rssi, connected());
 
     fmav_msg_radio_link_stats_pack(
         &msg_serial_out,
@@ -759,7 +779,7 @@ uint8_t flags, rx_rssi1, rx_rssi2, tx_rssi;
         flags,
 
         // rx stats
-        rxstats.GetLQ(), // uint8_t rx_LQ
+        rxstats.GetLQ_rc(), // uint8_t rx_LQ
         rx_rssi1, // uint8_t rx_rssi1
         stats.last_snr1, // int8_t rx_snr1
         rx_rssi2, // uint8_t rx_rssi2
@@ -768,7 +788,7 @@ uint8_t flags, rx_rssi1, rx_rssi2, tx_rssi;
         stats.last_transmit_antenna, // uint8_t rx_transmit_antenna
 
         // tx stats
-        stats.received_LQ, // uint8_t tx_LQ
+        stats.received_LQ_serial, // uint8_t tx_LQ
         tx_rssi, //uint8_t tx_rssi1
         INT8_MAX, // int8_t tx_snr1
         UINT8_MAX, // uint8_t tx_rssi2
@@ -785,7 +805,7 @@ uint8_t flags, rx_rssi1, rx_rssi2, tx_rssi;
 }
 
 
-void MavlinkBase::generate_radio_link_flow_control(void)
+void tRxMavlink::generate_radio_link_flow_control(void)
 {
     uint8_t txbuf = radio_status_txbuf;
 
@@ -799,8 +819,89 @@ void MavlinkBase::generate_radio_link_flow_control(void)
         &status_serial_out);
 }
 
+#else
 
-void MavlinkBase::generate_cmd_ack(void)
+void tRxMavlink::generate_radio_rc_channels(void)
+{
+int16_t channels[32]; // FASTMAVLINK_MSG_RADIO_RC_CHANNELS_FIELD_CHANNELS_NUM = 32
+
+    memcpy(channels, rc_chan_13b, 16*2);
+    for (uint8_t n = 16; n < 32; n++) channels[n] = 0;
+
+    uint8_t flags = 0;
+    if (rc_failsafe) flags |= RADIO_RC_CHANNELS_FLAGS_FAILSAFE;
+
+    fmav_msg_radio_rc_channels_dev_pack(
+        &msg_serial_out,
+        RADIO_LINK_SYSTEM_ID, MAV_COMP_ID_TELEMETRY_RADIO,
+        0,0,
+        16, flags, channels,
+        //uint8_t target_system, uint8_t target_component,
+        //uint8_t count, uint8_t flags, const int16_t* channels,
+        &status_serial_out);
+}
+
+
+void tRxMavlink::generate_radio_link_stats(void)
+{
+uint8_t flags, rx_rssi1, rx_rssi2, tx_rssi;
+
+    // Rssi are in negative dBm. Values 0..253 corresponds to 0..-253 dBm. 254 = no link connection, 255 = unknown
+    flags = RADIO_LINK_STATS_FLAGS_RSSI_DBM;
+
+    if (USE_ANTENNA1 && USE_ANTENNA2) {
+        rx_rssi1 = rssi_i8_to_mavradio(stats.last_rssi1, connected());
+        rx_rssi2 = rssi_i8_to_mavradio(stats.last_rssi2, connected());
+    } else if (USE_ANTENNA2) {
+        rx_rssi1 = UINT8_MAX;
+        rx_rssi2 = rssi_i8_to_mavradio(stats.last_rssi2, connected());
+    } else {
+        rx_rssi1 = rssi_i8_to_mavradio(stats.last_rssi1, connected());
+        rx_rssi2 = UINT8_MAX;
+    }
+
+    tx_rssi = rssi_i8_to_mavradio(stats.received_rssi, connected());
+
+    fmav_msg_radio_link_stats_dev_pack(
+        &msg_serial_out,
+        RADIO_LINK_SYSTEM_ID, MAV_COMP_ID_TELEMETRY_RADIO,
+        0,0, // targets
+
+        flags,
+
+        // rx stats
+        rxstats.GetLQ_rc(), // uint8_t rx_LQ_rc
+        rxstats.GetLQ_serial(), // uint8_t rx_LQ
+        rx_rssi1, // uint8_t rx_rssi1
+        stats.last_snr1, // int8_t rx_snr1
+        rx_rssi2, // uint8_t rx_rssi2
+        stats.last_snr2, // int8_t rx_snr2
+        stats.last_antenna, // uint8_t rx_receive_antenna
+        stats.last_transmit_antenna, // uint8_t rx_transmit_antenna
+        sx.RfPower_dbm(), // int8_t rx_power
+
+        // tx stats
+        (connected()) ? stats.received_LQ_serial : 0, // uint8_t tx_LQ
+        tx_rssi, // uint8_t tx_rssi1
+        INT8_MAX, // int8_t tx_snr1
+        UINT8_MAX, // uint8_t tx_rssi2
+        INT8_MAX, // int8_t tx_snr2
+        UINT8_MAX, // stats.received_antenna, we know that antenna but invalidate so that rssi1 is used // uint8_t tx_receive_antenna
+        UINT8_MAX, // stats.received_transmit_antenna, we know that antenna but invalidate so that rssi1 is used // uint8_t tx_transmit_antenna
+        INT8_MAX, // int8_t tx_power
+
+        //uint8_t target_system, uint8_t target_component,
+        //uint8_t flags,
+        //uint8_t rx_LQ_rc, uint8_t rx_LQ, uint8_t rx_rssi1, int8_t rx_snr1, uint8_t rx_rssi2, int8_t rx_snr2,
+        //uint8_t rx_receive_antenna, uint8_t rx_transmit_antenna, int8_t rx_power,
+        //uint8_t tx_LQ, uint8_t tx_rssi1, int8_t tx_snr1, uint8_t tx_rssi2, int8_t tx_snr2,
+        //uint8_t tx_receive_antenna, uint8_t tx_transmit_antenna, int8_t tx_power,
+        &status_serial_out);
+}
+#endif
+
+
+void tRxMavlink::generate_cmd_ack(void)
 {
     fmav_msg_command_ack_pack(
         &msg_serial_out,
@@ -817,7 +918,7 @@ void MavlinkBase::generate_cmd_ack(void)
 }
 
 
-void MavlinkBase::handle_cmd_long(void)
+void tRxMavlink::handle_cmd_long(void)
 {
 #ifdef USE_FEATURE_MAVLINKX
 fmav_command_long_t payload;
