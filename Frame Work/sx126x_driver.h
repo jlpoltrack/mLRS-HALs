@@ -12,6 +12,8 @@
 #define SX126X_DRIVER_H
 #pragma once
 
+#define SX_USE_DCDC
+
 
 //-------------------------------------------------------
 // SX Driver
@@ -48,16 +50,16 @@ const tSxLoraConfiguration Sx126xLoraConfiguration[] = {
       .TimeOverAir = 13456,
       .ReceiverSensitivity = -111,
     },
-    { .SpreadingFactor = SX126X_LORA_SF6,
-      .Bandwidth = SX126X_LORA_BW_500,
-      .CodingRate = SX126X_LORA_CR_4_8,
+    { .SpreadingFactor = SX126X_LORA_SF5,
+      .Bandwidth = SX126X_LORA_BW_250,
+      .CodingRate = SX126X_LORA_CR_4_7,
       .PreambleLength = 12,
       .HeaderType = SX126X_LORA_HEADER_DISABLE,
       .PayloadLength = FRAME_TX_RX_LEN,
       .CrcEnabled = SX126X_LORA_CRC_DISABLE,
       .InvertIQ = SX126X_LORA_IQ_NORMAL,
-      .TimeOverAir = 22816,
-      .ReceiverSensitivity = -112, // Q: SF5 with CR4/8 would be -111 dBm, 20.1 ms, better option??
+      .TimeOverAir = 23968,
+      .ReceiverSensitivity = -114, // Q: SF5 with CR4/8 would be -111 dBm, 20.1 ms, better option??
     }
 };
 
