@@ -18,7 +18,7 @@
 #include "setup_types.h"
 
 
-#define FHSS_MAX_NUM            50
+#define FHSS_MAX_NUM            64
 #define FHSS_FREQ_LIST_MAX_LEN  86 // 2.4 GHz is 80
 
 //-------------------------------------------------------
@@ -293,7 +293,7 @@ const uint32_t fhss_freq_list_2p4[] = {
     SX1280_FREQ_GHZ_TO_REG(2.458),
     SX1280_FREQ_GHZ_TO_REG(2.459),
     SX1280_FREQ_GHZ_TO_REG(2.460),
-/*
+
     SX1280_FREQ_GHZ_TO_REG(2.461), // channel 60
     SX1280_FREQ_GHZ_TO_REG(2.462),
     SX1280_FREQ_GHZ_TO_REG(2.463),
@@ -315,7 +315,6 @@ const uint32_t fhss_freq_list_2p4[] = {
     SX1280_FREQ_GHZ_TO_REG(2.478),
     SX1280_FREQ_GHZ_TO_REG(2.479),
     SX1280_FREQ_GHZ_TO_REG(2.480), // channel 79
-*/
 };
 
 const uint8_t fhss_bind_channel_list_2p4[] = {
@@ -478,18 +477,19 @@ class tFhssBase
             // Config.connect_listen_hop_cnt does depend on Config.FhssNum !!!
             // is used by rx to cycle through frequencies when in LISTEN
             if (ortho >= ORTHO_1_3 && ortho <= ORTHO_3_3) {
+                // we narrow down to 12 or 18
                 if (except >= EXCEPT_2P4_GHZ_WIFIBAND_1 && except <= EXCEPT_2P4_GHZ_WIFIBAND_13) {
                     // we only have 55 channels or so, so narrow down to 12 (12 * 3 = 36 < 55)
                     if (cnt > 12) cnt = 12;
                 } else {
                     // we have 77 channels, so can accommodate up to 18 frequencies (18 * 3 = 54 < 77)
-                    if (cnt > 18) cnt = 18; // we narrow down to 12 or 18
+                    if (cnt > 18) cnt = 18;
                     except = EXCEPT_NONE;
                 }
                 if (cnt > fhss_num) cnt = fhss_num;
             } else {
                 ortho = ORTHO_NONE;
-                except = EXCEPT_NONE;
+                if (except > EXCEPT_2P4_GHZ_WIFIBAND_13) except = EXCEPT_NONE;
             }
             generate_ortho_except(seed, ortho, except);
             break;
