@@ -16,11 +16,12 @@
 // TX DIY DUAL-E28 BOARD02 v010 STM32F103CB
 //-------------------------------------------------------
 
-//#define DEVICE_HAS_DIVERSITY
+#define DEVICE_HAS_DIVERSITY
 #define DEVICE_HAS_JRPIN5 // requires diode from Tx to Rx soldered on the board
 //#define DEVICE_HAS_IN
 #define DEVICE_HAS_DEBUG_SWUART
-#define MLRS_DEV_FEATURE_FLRC
+#define SX_USE_REGULATOR_MODE_DCDC
+#define SX2_USE_REGULATOR_MODE_DCDC
 
 
 #ifdef MLRS_FEATURE_JRPIN5
@@ -43,9 +44,6 @@
 
 #define DELAY_USE_DWT
 
-#define SYSTICK_TIMESTEP          1000
-#define SYSTICK_DELAY_MS(x)       (uint16_t)(((uint32_t)(x)*(uint32_t)1000)/SYSTICK_TIMESTEP)
-
 #define EE_START_PAGE             124 // 128 kB flash, 1 kB page
 
 #define MICROS_TIMx               TIM3
@@ -57,7 +55,7 @@
 // UART = JR bay pin5 (SPORT)
 // UARTE = in port, SBus or whatever
 
-#define UARTB_USE_UART3 // serial
+#define UARTB_USE_UART3_PB10PB11 // serial
 #define UARTB_BAUD                TX_SERIAL_BAUDRATE
 #define UARTB_USE_TX
 #define UARTB_TXBUFSIZE           TX_SERIAL_TXBUFSIZE
@@ -65,7 +63,7 @@
 #define UARTB_USE_RX
 #define UARTB_RXBUFSIZE           TX_SERIAL_RXBUFSIZE
 
-#define UARTC_USE_UART1 // COM (CLI)
+#define UARTC_USE_UART1_PA9PA10 // COM (CLI)
 #define UARTC_BAUD                115200
 #define UARTC_USE_TX
 #define UARTC_TXBUFSIZE           TX_COM_TXBUFSIZE
@@ -74,7 +72,7 @@
 #define UARTC_RXBUFSIZE           TX_COM_RXBUFSIZE
 
 #ifdef DEVICE_HAS_IN
-#define UARTE_USE_UART2 // in pin
+#define UARTE_USE_UART2_PA2PA3 // in pin
 #define UARTE_BAUD                100000 // SBus normal baud rate, is being set later anyhow
 //#define UARTE_USE_TX
 //#define UARTE_TXBUFSIZE           512
@@ -83,7 +81,7 @@
 #define UARTE_RXBUFSIZE           512
 #endif
 #ifdef DEVICE_HAS_JRPIN5
-#define UART_USE_UART2 // JR pin5, MBridge
+#define UART_USE_UART2_PA2PA3 // JR pin5, MBridge
 #define UART_BAUD                 400000
 #define UART_USE_TX
 #define UART_TXBUFSIZE            512
@@ -104,7 +102,7 @@
 #define SWUART_BAUD               115200
 #define SWUART_USE_TX
 #define SWUART_TXBUFSIZE          512
-//#define SWUART_TIM_IRQ_PRIORITY   11
+//#define SWUART_TIM_IRQ_PRIORITY   9
 
 
 //-- SX1: SX12xx & SPI
@@ -112,7 +110,7 @@
 #define SPI_USE_SPI1 // PA5, PA6, PA7
 #define SPI_CS_IO                 IO_PB0
 #define SPI_USE_CLK_LOW_1EDGE     // datasheet says CPHA = 0  CPOL = 0
-#define SPI_USE_CLOCKSPEED_9MHZ
+#define SPI_USE_CLOCKSPEED_18MHZ
 
 #define SX_RESET                  IO_PB5
 #define SX_DIO1                   IO_PB3
@@ -184,7 +182,7 @@ void sx_dio_exti_isr_clearflag(void)
 #define SPIB_USE_SPI2             // PB13, PB14, PB15
 #define SPIB_CS_IO                IO_PA8
 #define SPIB_USE_CLK_LOW_1EDGE    // datasheet says CPHA = 0  CPOL = 0
-#define SPIB_USE_CLOCKSPEED_9MHZ
+#define SPIB_USE_CLOCKSPEED_18MHZ
 
 #define SX2_RESET                 IO_PA4
 #define SX2_DIO1                  IO_PA1
