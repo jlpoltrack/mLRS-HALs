@@ -1026,7 +1026,7 @@ IF_CRSF(
         channelOrder.Set(Setup.Tx[Config.ConfigId].ChannelOrder); //TODO: better than before, but still better place!?
         channelOrder.Apply(&rcData);
         if (rcData.ch[10] > 1200) {
-        	sx.SetRfPower_dbm(24);
+		sx.SetRfPower_dbm(24);
         	sx2.SetRfPower_dbm(24);
         }
         else if (rcData.ch[10] < 800) {
@@ -1035,7 +1035,7 @@ IF_CRSF(
         }
         else {
         	sx.SetRfPower_dbm(20);
-			sx2.SetRfPower_dbm(20);
+		sx2.SetRfPower_dbm(20);
         }
 
     }
