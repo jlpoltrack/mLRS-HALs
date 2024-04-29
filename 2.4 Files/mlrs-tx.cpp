@@ -91,6 +91,9 @@ ChannelOrder channelOrder(ChannelOrder::DIRECTION_TX_TO_MLRS);
 tConfigId config_id;
 tTxCli cli;
 
+uint8_t currentRfPower = 10;
+uint8_t requestedRfPower = 10;
+
 
 //-------------------------------------------------------
 // Mavlink
@@ -1026,18 +1029,20 @@ IF_CRSF(
         channelOrder.Set(Setup.Tx[Config.ConfigId].ChannelOrder); //TODO: better than before, but still better place!?
         channelOrder.Apply(&rcData);
         if (rcData.ch[10] > 1200) {
-		sx.SetRfPower_dbm(24);
-        	sx2.SetRfPower_dbm(24);
+        	requestedRfPower = 24;
         }
         else if (rcData.ch[10] < 800) {
-        	sx.SetRfPower_dbm(10);
-        	sx2.SetRfPower_dbm(10);
+        	requestedRfPower = 10;
         }
         else {
-        	sx.SetRfPower_dbm(20);
-		sx2.SetRfPower_dbm(20);
+        	requestedRfPower = 20;
         }
 
+        if (currentRfPower != requestedRfPower) {
+        	sx.SetRfPower_dbm(requestedRfPower);
+			sx2.SetRfPower_dbm(requestedRfPower);
+			currentRfPower = requestedRfPower;
+        }
     }
     uint8_t crsftask; uint8_t crsfcmd;
     uint8_t mbcmd; static uint8_t do_cnt = 0; // if it's too fast Lua script gets out of sync
@@ -1138,4 +1143,3 @@ IF_IN(
     }
 
 }//end of main_loop
-
