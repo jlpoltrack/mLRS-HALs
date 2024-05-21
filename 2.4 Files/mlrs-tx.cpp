@@ -21,7 +21,7 @@
 #define UARTD_IRQ_PRIORITY          15 // serial2/ESP/BT
 #define UARTF_IRQ_PRIORITY          15 // debug
 #define SX_DIO_EXTI_IRQ_PRIORITY    13
-#define SX2_DIO_EXTI_IRQ_PRIORITY   13
+#define SX2_DIO_EXTI_IRQ_PRIORITY   13 // on single spi diversity systems must be equal to DIO priority
 #define SWUART_TIM_IRQ_PRIORITY      9 // debug on swuart
 #define BUZZER_TIM_IRQ_PRIORITY     14
 
@@ -96,7 +96,7 @@ uint8_t requestedRfPower = 10;
 
 
 //-------------------------------------------------------
-// Mavlink
+// MAVLink
 //-------------------------------------------------------
 
 #include "mavlink_interface_tx.h"
@@ -969,8 +969,8 @@ IF_MBRIDGE(
         // when we receive channels packet from transmitter, we send link stats to transmitter
         mbridge.TelemetryStart();
     }
-    // mBridge sends mbridge cmd twice per 20 ms cycle, so we have 10 ms time to process
-    // we can't send too fast, in otx the receive buffer can hold 64 cmds
+    // mBridge sends mBridge cmd twice per 20 ms cycle, so we have 10 ms time to process
+    // we can't send too fast, in OTX the receive buffer can hold 64 cmds
     uint8_t mbtask; uint8_t mbcmd;
     if (mbridge.TelemetryUpdate(&mbtask)) {
         switch (mbtask) {
@@ -981,7 +981,7 @@ IF_MBRIDGE(
         }
     }
 );
-IF_MBRIDGE_OR_CRSF( // to allow crsf mbridge emulation
+IF_MBRIDGE_OR_CRSF( // to allow CRSF mBridge emulation
     // handle an incoming command
     uint8_t mbcmd;
     if (mbridge.CommandReceived(&mbcmd)) {
@@ -990,7 +990,7 @@ IF_MBRIDGE_OR_CRSF( // to allow crsf mbridge emulation
             setup_reload();
             if (connected()) {
                 link_task_set(LINK_TASK_TX_GET_RX_SETUPDATA_WRELOAD);
-                mbridge.Lock(MBRIDGE_CMD_REQUEST_INFO); // lock mbridge
+                mbridge.Lock(MBRIDGE_CMD_REQUEST_INFO); // lock mBridge
             } else {
                 mbridge.HandleCmd(MBRIDGE_CMD_REQUEST_INFO);
             }
@@ -1002,13 +1002,13 @@ IF_MBRIDGE_OR_CRSF( // to allow crsf mbridge emulation
             bool param_changed = mbridge_do_ParamSet(mbridge.GetPayloadPtr(), &rx_param_changed);
             if (param_changed && rx_param_changed && connected()) {
                 link_task_set(LINK_TASK_TX_SET_RX_PARAMS); // set parameter on Rx side
-                mbridge.Lock(MBRIDGE_CMD_PARAM_SET); // lock mbridge
+                mbridge.Lock(MBRIDGE_CMD_PARAM_SET); // lock mBridge
             }
             }break;
         case MBRIDGE_CMD_PARAM_STORE:
             if (connected()) {
                 link_task_set(LINK_TASK_TX_STORE_RX_PARAMS);
-                mbridge.Lock(MBRIDGE_CMD_PARAM_STORE); // lock mbridge
+                mbridge.Lock(MBRIDGE_CMD_PARAM_STORE); // lock mBridge
             } else {
                 doParamsStore = true;
             }
@@ -1028,30 +1028,34 @@ IF_CRSF(
         // update channels
         channelOrder.Set(Setup.Tx[Config.ConfigId].ChannelOrder); //TODO: better than before, but still better place!?
         channelOrder.Apply(&rcData);
-        if (rcData.ch[10] > 1200) {
-        	requestedRfPower = 24;
-        }
-        else if (rcData.ch[10] < 800) {
-        	requestedRfPower = 10;
-        }
-        else {
-        	requestedRfPower = 20;
-        }
-
-        if (currentRfPower != requestedRfPower) {
-        	sx.SetRfPower_dbm(requestedRfPower);
-			sx2.SetRfPower_dbm(requestedRfPower);
-			currentRfPower = requestedRfPower;
-        }
     }
+
+	if (rcData.ch[10] > 1200) {
+		requestedRfPower = 24;
+	}
+
+	else if (rcData.ch[10] < 800) {
+		requestedRfPower = 10;
+	}
+
+	else {
+		requestedRfPower = 20;
+	}
+
+	if (currentRfPower != requestedRfPower) {
+		sx.SetRfPower_dbm(requestedRfPower);
+		sx2.SetRfPower_dbm(requestedRfPower);
+		currentRfPower = requestedRfPower;
+	}
+
     uint8_t crsftask; uint8_t crsfcmd;
     uint8_t mbcmd; static uint8_t do_cnt = 0; // if it's too fast Lua script gets out of sync
     uint8_t* buf; uint8_t len;
     if (crsf.TelemetryUpdate(&crsftask, Config.frame_rate_ms)) {
         switch (crsftask) {
-        case TXCRSF_SEND_LINK_STATISTICS: crsf_send_LinkStatistics(); do_cnt = 0; break;
-        case TXCRSF_SEND_LINK_STATISTICS_TX: crsf_send_LinkStatisticsTx(); break;
-        case TXCRSF_SEND_LINK_STATISTICS_RX: crsf_send_LinkStatisticsRx(); break;
+        case TXCRSF_SEND_LINK_STATISTICS: crsf.SendLinkStatistics(); do_cnt = 0; break;
+        case TXCRSF_SEND_LINK_STATISTICS_TX: crsf.SendLinkStatisticsTx(); break;
+        case TXCRSF_SEND_LINK_STATISTICS_RX: crsf.SendLinkStatisticsRx(); break;
         case TXCRSF_SEND_TELEMETRY_FRAME:
             if (!do_cnt && mbridge.CommandInFifo(&mbcmd)) {
                 mbridge_send_cmd(mbcmd);
@@ -1087,7 +1091,7 @@ IF_IN(
     }
 );
 
-    //-- Do mavlink
+    //-- Do MAVLink
 
     mavlink.Do();
 
@@ -1095,7 +1099,7 @@ IF_IN(
 
     whileTransmit.Do();
 
-    //-- Handle display or cli task
+    //-- Handle display or CLI task
 
     uint8_t cli_task = disp.Task();
     if (cli_task == CLI_TASK_NONE) cli_task = cli.Task();
@@ -1104,13 +1108,13 @@ IF_IN(
     case CLI_TASK_RX_PARAM_SET:
         if (connected()) {
             link_task_set(LINK_TASK_TX_SET_RX_PARAMS);
-            mbridge.Lock(); // lock mbridge
+            mbridge.Lock(); // lock mBridge
         }
         break;
     case CLI_TASK_PARAM_STORE:
         if (connected()) {
             link_task_set(LINK_TASK_TX_STORE_RX_PARAMS);
-            mbridge.Lock(); // lock mbridge
+            mbridge.Lock(); // lock mBridge
         } else {
             doParamsStore = true;
         }
@@ -1119,7 +1123,7 @@ IF_IN(
         setup_reload();
         if (connected()) {
             link_task_set(LINK_TASK_TX_GET_RX_SETUPDATA_WRELOAD);
-            mbridge.Lock(); // lock mbridge
+            mbridge.Lock(); // lock mBridge
         }
         break;
     case CLI_TASK_BIND: start_bind(); break;
@@ -1130,7 +1134,7 @@ IF_IN(
     case CLI_TASK_CHANGE_CONFIG_ID: config_id.Change(cli.GetTaskValue()); break;
     }
 
-    //-- Handle esp wifi bridge
+    //-- Handle ESP wifi bridge
 
     esp.Do();
     uint8_t esp_task = esp.Task();
@@ -1143,3 +1147,4 @@ IF_IN(
     }
 
 }//end of main_loop
+
