@@ -9,6 +9,7 @@
 
 //-------------------------------------------------------
 // FRM303 Module with STM32F103C8 as RECEIVER
+// Also need to update device_conf.h entry for R9M RX
 //-------------------------------------------------------
 
 #define DEVICE_HAS_OUT_NORMAL
