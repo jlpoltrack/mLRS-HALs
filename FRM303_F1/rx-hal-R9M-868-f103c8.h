@@ -204,6 +204,7 @@ const rfpower_t rfpower_list[] = {
     { .dbm = POWER_24_DBM, .mW = 250 },
     { .dbm = POWER_27_DBM, .mW = 500 },
     { .dbm = POWER_30_DBM, .mW = 1000 },
+	{ .dbm = POWER_33_DBM, .mW = 2000 },
 };
 
 
