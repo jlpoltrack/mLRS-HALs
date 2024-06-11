@@ -74,9 +74,9 @@
 #include "../Common/common.h"
 #include "../Common/channel_order.h"
 #include "../Common/diversity.h"
+#include "../Common/arq.h"
 //#include "../Common/test.h" // un-comment if you want to compile for board test
 
-#include "txstats.h"
 #include "config_id.h"
 #include "cli.h"
 #include "mbridge_interface.h" // this includes uart.h as it needs callbacks, declares tMBridge mbridge
@@ -84,10 +84,10 @@
 #include "in_interface.h" // this includes uarte.h, in.h, declares tIn in
 
 
-tTxStats txstats;
 tRDiversity rdiversity;
 tTDiversity tdiversity;
-ChannelOrder channelOrder(ChannelOrder::DIRECTION_TX_TO_MLRS);
+tReceiveArq rarq;
+tChannelOrder channelOrder(tChannelOrder::DIRECTION_TX_TO_MLRS);
 tConfigId config_id;
 tTxCli cli;
 
@@ -142,17 +142,17 @@ tTxEspWifiBridge esp;
 #include "../Common/while.h"
 
 
-class WhileTransmit : public WhileBase
+class tWhileTransmit : public tWhileBase
 {
   public:
     uint32_t dtmax_us(void) override { return sx.TimeOverAir_us() - 1000; }
     void handle_once(void) override;
 };
 
-WhileTransmit whileTransmit;
+tWhileTransmit whileTransmit;
 
 
-void WhileTransmit::handle_once(void)
+void tWhileTransmit::handle_once(void)
 {
     cli.Set(Setup.Tx[Config.ConfigId].CliLineEnd);
     cli.Do();
@@ -422,7 +422,6 @@ uint8_t payload[FRAME_TX_PAYLOAD_LEN];
 uint8_t payload_len = 0;
 
     if (transmit_frame_type == TRANSMIT_FRAME_TYPE_NORMAL) {
-
         // read data from serial port
         if (connected()) {
             if (sx_serial.IsEnabled()) {
@@ -444,23 +443,34 @@ uint8_t payload_len = 0;
 
     tFrameStats frame_stats;
     frame_stats.seq_no = stats.transmit_seq_no;
-    frame_stats.ack = 1;
+    frame_stats.ack = rarq.AckSeqNo();
     frame_stats.antenna = stats.last_antenna;
     frame_stats.transmit_antenna = antenna;
     frame_stats.rssi = stats.GetLastRssi();
     frame_stats.LQ_rc = UINT8_MAX; // Tx has no valid value
-    frame_stats.LQ_serial = txstats.GetLQ_serial();
+    frame_stats.LQ_serial = stats.GetLQ_serial();
 
     if (transmit_frame_type == TRANSMIT_FRAME_TYPE_NORMAL) {
         pack_txframe(&txFrame, &frame_stats, &rcData, payload, payload_len);
     } else {
         pack_txcmdframe(&txFrame, &frame_stats, &rcData);
     }
+
+#ifdef USE_ARQ_DBG
+dbg.puts("\ntrs ");
+dbg.puts(u8toBCD_s(rarq.AckSeqNo()));
+#endif
 }
 
 
 void process_received_frame(bool do_payload, tRxFrame* frame)
 {
+    bool accept_payload = rarq.AcceptPayload();
+
+#ifdef USE_ARQ_DBG
+dbg.puts(accept_payload?" TRUE":" FALSE");
+#endif
+
     stats.received_antenna = frame->status.antenna;
     stats.received_transmit_antenna = frame->status.transmit_antenna;
     stats.received_rssi = rssi_i8_from_u7(frame->status.rssi_u7);
@@ -468,6 +478,8 @@ void process_received_frame(bool do_payload, tRxFrame* frame)
     stats.received_LQ_serial = frame->status.LQ_serial;
 
     if (!do_payload) return; // always true
+
+    if (!accept_payload) return;
 
     if (frame->status.frame_type == FRAME_TYPE_TX_RX_CMD) {
         process_received_rxcmdframe(frame);
@@ -511,12 +523,32 @@ tRxFrame* frame;
         FAIL_WSTATE(BLINK_4, "rx_status failure", 0,0, link_rx1_status, link_rx2_status);
     }
 
+    // receive ARQ, must come before process_received_frame()
+    if (rx_status == RX_STATUS_VALID) {
+        rarq.Received(frame->status.seq_no);
+    } else {
+        rarq.FrameMissed();
+    }
+    // check this before received data may be passed to parsers
+    if (rarq.FrameLost()) {
+        mavlink.FrameLost();
+    }
+
+#ifdef USE_ARQ_DBG
+dbg.puts("\nrec");
+if(rarq.status==tReceiveArq::ARQ_RX_FRAME_MISSED) dbg.puts(" FM"); else
+if(rarq.status==tReceiveArq::ARQ_RX_RECEIVED_WAS_IDLE) dbg.puts(" RI"); else
+if(rarq.status==tReceiveArq::ARQ_RX_RECEIVED) dbg.puts(" R");
+dbg.puts(" seq_last ");dbg.puts(u8toBCD_s(rarq.received_seq_no_last));
+dbg.puts(" seq ");dbg.puts(u8toBCD_s(rarq.received_seq_no));
+#endif
+
     if (rx_status > RX_STATUS_INVALID) { // RX_STATUS_VALID
         bool do_payload = true;
 
         process_received_frame(do_payload, frame);
 
-        txstats.doValidFrameReceived(); // should we count valid payload only if rx frame ?
+        stats.doValidFrameReceived(); // should we count valid payload only if rx frame ?
 
     } else { // RX_STATUS_INVALID
     }
@@ -525,12 +557,17 @@ tRxFrame* frame;
     stats.last_antenna = antenna;
 
     // we count all received frames
-    txstats.doFrameReceived();
+    stats.doFrameReceived();
 }
 
 
 void handle_receive_none(void) // RX_STATUS_NONE
 {
+    rarq.FrameMissed();
+
+#ifdef USE_ARQ_DBG
+dbg.puts("\nrec FMISSED");
+#endif
 }
 
 
@@ -599,12 +636,12 @@ uint8_t connect_sync_cnt;
 bool connect_occured_once;
 
 
-static inline bool connected(void)
+bool connected(void)
 {
     return (connect_state == CONNECT_STATE_CONNECTED);
 }
 
-static inline bool connected_and_rx_setup_available(void)
+bool connected_and_rx_setup_available(void)
 {
     return (connected() && SetupMetaData.rx_available);
 }
@@ -652,9 +689,10 @@ RESTARTCONTROLLER
     link_task_init();
     link_task_set(LINK_TASK_TX_GET_RX_SETUPDATA); // we start with wanting to get rx setup data
 
-    txstats.Init(Config.LQAveragingPeriod);
+    stats.Init(Config.LQAveragingPeriod, Config.frame_rate_hz, Config.frame_rate_ms);
     rdiversity.Init();
     tdiversity.Init(Config.frame_rate_ms);
+    rarq.Init();
 
     in.Configure(Setup.Tx[Config.ConfigId].InMode);
     mavlink.Init(&serial, &mbridge, &serial2); // ports selected by SerialDestination, ChannelsSource
@@ -712,7 +750,7 @@ INITCONTROLLER_END
         if (!tick_1hz) {
             dbg.puts(".");
 /*            dbg.puts("\nTX: ");
-            dbg.puts(u8toBCD_s(txstats.GetLQ_serial()));
+            dbg.puts(u8toBCD_s(stats.GetLQ_serial()));
             dbg.puts("(");
             dbg.puts(u8toBCD_s(stats.frames_received.GetLQ())); dbg.putc(',');
             dbg.puts(u8toBCD_s(stats.valid_frames_received.GetLQ()));
@@ -831,6 +869,10 @@ IF_SX2(
         sx.SetToIdle();
         sx2.SetToIdle();
 
+#ifdef USE_ARQ
+if (rarq.SimulateMiss()) { link_rx1_status = link_rx2_status = RX_STATUS_NONE; }
+#endif
+
         bool frame_received, valid_frame_received;
         if (USE_ANTENNA1 && USE_ANTENNA2) {
             frame_received = (link_rx1_status > RX_STATUS_NONE) || (link_rx2_status > RX_STATUS_NONE);
@@ -864,13 +906,16 @@ IF_SX2(
         }
 
         // serial data is received if !IsInBind() && RX_STATUS_VALID && !FRAME_TYPE_TX_RX_CMD && sx_serial.IsEnabled()
+        // valid_frame/frame lost logic is modified by ARQ
+#ifndef USE_ARQ
         if (!valid_frame_received) {
             mavlink.FrameLost();
         }
+#endif
 
-        txstats.fhss_curr_i = fhss.CurrI();
-        txstats.rx1_valid = (link_rx1_status > RX_STATUS_INVALID);
-        txstats.rx2_valid = (link_rx2_status > RX_STATUS_INVALID);
+        stats.fhss_curr_i = fhss.CurrI();
+        stats.rx1_valid = (link_rx1_status > RX_STATUS_INVALID);
+        stats.rx2_valid = (link_rx2_status > RX_STATUS_INVALID);
 
         if (valid_frame_received) { // valid frame received
             switch (connect_state) {
@@ -919,6 +964,8 @@ IF_SX2(
         link_rx1_status = RX_STATUS_NONE;
         link_rx2_status = RX_STATUS_NONE;
 
+        if (!connected()) rarq.Disconnected();
+
         if (connect_state == CONNECT_STATE_LISTEN) {
             link_task_reset(); // to ensure that the following set is enforced
             link_task_set(LINK_TASK_TX_GET_RX_SETUPDATA);
@@ -926,10 +973,11 @@ IF_SX2(
 
         DECc(tick_1hz_commensurate, Config.frame_rate_hz);
         if (!tick_1hz_commensurate) {
-            txstats.Update1Hz();
+            stats.Update1Hz();
+            mavlink.StatsUpdate1Hz();
         }
-        txstats.Next();
-        if (!connected()) txstats.Clear();
+        stats.Next();
+        if (!connected()) stats.Clear();
 
         if (Setup.Tx[Config.ConfigId].Buzzer == BUZZER_LOST_PACKETS && connect_occured_once && !bind.IsInBind()) {
             if (!valid_frame_received) buzzer.BeepLP();
@@ -1033,6 +1081,7 @@ IF_CRSF(
         channelOrder.Apply(&rcData);
     }
 
+	// Switchable Power
 	if (rcData.ch[10] > 1200) {
 		requestedRfPower = 24;
 	}
@@ -1150,3 +1199,4 @@ IF_IN(
     }
 
 }//end of main_loop
+
